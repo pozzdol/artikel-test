@@ -1,0 +1,30 @@
+.Tiptap {
+    :first-child {
+        margin-top: 0;
+    }
+
+    ul,
+    ol {
+        padding: 0 1rem;
+        margin: 1.25rem 1rem 1.25rem 0.4rem;
+
+        li p {
+            margin-top: 0.25rem;
+            margin-bottom: 0.25rem;
+        }
+    }
+}
+
+.ProseMirror {
+    border: 1px 0 solid #d1d5db; /* Tailwind: border-gray-300 */
+    outline: none !important;
+    border-radius: 0 0 0.375rem 0.375rem; /* Tailwind: rounded-md */
+    padding: 0.25rem 0.5rem;
+    box-shadow: none !important;
+    height: 80px; /* Adjust height as needed */
+}
+
+.is-active {
+    background-color: #374151; /* Tailwind: bg-red-500 */
+    color: white; /* Adjust text color for better contrast */
+}
