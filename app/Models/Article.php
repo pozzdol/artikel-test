@@ -10,7 +10,7 @@ class Article extends Model
 {
     use HasFactory, HasUuids;
 
-    protected $fillable = ['user_id', 'title', 'content_html', 'content_json'];
+    protected $fillable = ['user_id', 'hero_img', 'title', 'content_html', 'content_json'];
 
     /**
      * Get the user that owns the article.

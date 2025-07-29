@@ -22,7 +22,7 @@
         "vite": "^6.0.11"
     },
     "dependencies": {
-        "@floating-ui/react": "^0.27.13",
+        "@floating-ui/react": "^0.27.14",
         "@primer/octicons-react": "^19.15.5",
         "@radix-ui/react-dropdown-menu": "^2.1.15",
         "@radix-ui/react-popover": "^1.1.14",

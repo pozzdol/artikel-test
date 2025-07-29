@@ -1,4 +1,4 @@
-.Tiptap {
+.tiptap {
     :first-child {
         margin-top: 0;
     }
@@ -12,6 +12,26 @@
             margin-top: 0.25rem;
             margin-bottom: 0.25rem;
         }
+    }
+
+    h1 {
+        font-size: 1.875rem; /* Tailwind: text-3xl */
+        font-weight: 700; /* Tailwind: font-bold */
+    }
+
+    h2 {
+        font-size: 1.5rem; /* Tailwind: text-2xl */
+        font-weight: 700; /* Tailwind: font-bold */
+    }
+
+    h3 {
+        font-size: 1.25rem; /* Tailwind: text-xl */
+        font-weight: 700; /* Tailwind: font-bold */
+    }
+
+    h4 {
+        font-size: 1rem; /* Tailwind: text-base */
+        font-weight: 600; /* Tailwind: font-semibold */
     }
 }
 

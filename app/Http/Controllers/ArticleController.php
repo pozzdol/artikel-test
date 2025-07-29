@@ -27,16 +27,28 @@ class ArticleController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'title' => 'required',
-            'content_html' => 'required',
+            'title' => 'required|string|max:255',
+            'content_html' => 'required|string',
             'content_json' => 'nullable|json',
+            'hero_img' => 'nullable|image|max:2048',
         ]);
 
+        $userId = auth()->id();
+        if (!$userId) {
+            abort(403, 'Unauthorized');
+        }
+
+        $heroImgPath = null;
+        if ($request->hasFile('hero_img')) {
+            $heroImgPath = $request->file('hero_img')->store('articles', 'public');
+        }
+
         $article = Article::create([
-            'user_id' => auth()->id(),
+            'user_id' => $userId,
             'title' => $request->title,
             'content_html' => $request->content_html,
             'content_json' => $request->content_json,
+            'hero_img' => $heroImgPath,
         ]);
 
         return redirect()->route('articles.index');

@@ -5,6 +5,7 @@ import { NodeSelection, TextSelection } from "@tiptap/pm/state"
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 // --- Lib ---
 import {
@@ -230,6 +231,7 @@ export function useHeading(config) {
   } = config
 
   const { editor } = useTiptapEditor(providedEditor)
+  const isMobile = useIsMobile()
   const [isVisible, setIsVisible] = React.useState(true)
   const canToggleState = canToggle(editor, level)
   const isActive = isHeadingActive(editor, level)
@@ -265,7 +267,7 @@ export function useHeading(config) {
     handleToggle()
   }, {
     enabled: isVisible && canToggleState,
-    enableOnContentEditable: true,
+    enableOnContentEditable: !isMobile,
     enableOnFormTags: true,
   })
 
