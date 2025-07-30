@@ -10,6 +10,7 @@ import {
     Type,
     ChevronDown,
     UnderlineIcon,
+    TextQuote,
 } from "lucide-react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import ButtonMenu from "@/Components/ButtonMenu";
@@ -269,6 +270,26 @@ function MenuBar({ editor, isOpen, setIsOpen, menuRef }) {
                     <Strikethrough size={16} strokeWidth={2.5} />
                 </ButtonMenu>
             </div>
+
+            <div className="w-px h-6 bg-gray-300" />
+
+            <div className="flex items-center gap-1">
+                <ButtonMenu
+                    onClick={() => {
+                        if (editor && !editor.isDestroyed) {
+                            editor.chain().focus().toggleStrike().run();
+                        }
+                    }}
+                    disabled={
+                        !editor ||
+                        editor.isDestroyed ||
+                        !editor.can().chain().focus().toggleStrike().run()
+                    }
+                    isActive={editorState.isStrikethrough}
+                >
+                    <TextQuote size={16} strokeWidth={2.5} />
+                </ButtonMenu>
+            </div>
         </div>
     );
 }
@@ -361,10 +382,10 @@ export default function Create() {
         >
             <Head title="Tulis Artikel Baru" />
 
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
                 <div className="max-w-5xl mx-auto py-12 px-6">
                     {/* Main Form Container */}
-                    <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20 overflow-hidden">
+                    <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg border border-white/20 overflow-hidden">
                         <div className="p-8 lg:p-12">
                             <div className="article-editor max-w-4xl mx-auto">
                                 <form
