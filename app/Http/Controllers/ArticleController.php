@@ -10,12 +10,18 @@ class ArticleController extends Controller
 {
     public function index()
     {
-        $id_user = auth()->id();
+        $user = auth()->user();
 
-        $articles = Article::with('user')
-            ->where('user_id', $id_user)
-            ->latest()
-            ->get();
+        if ($user->role === 'admin') {
+            // Admin bisa melihat semua artikel
+            $articles = Article::with('user')->latest()->get();
+        } else {
+            // User biasa hanya melihat artikelnya sendiri
+            $articles = Article::with('user')
+                ->where('user_id', $user->id)
+                ->latest()
+                ->get();
+        }
         return Inertia::render('Articles/Index', ['articles' => $articles]);
     }
 
