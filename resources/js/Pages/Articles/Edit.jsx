@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import ImageCropper from "./ImageCropper";
 import { useEditor, EditorContent } from "@tiptap/react";
 import { StarterKit } from "@tiptap/starter-kit";
 import { Head, router } from "@inertiajs/react";
@@ -115,7 +116,11 @@ const DropdownMenu = ({ children, isOpen, setIsOpen, menuRef }) => (
     </div>
 );
 
-export default function Create() {
+export default function Edit({ article }) {
+    const [showCropper, setShowCropper] = useState(false);
+    const [rawImage, setRawImage] = useState(null);
+    const [croppedPreview, setCroppedPreview] = useState(null);
+    const [croppedBlob, setCroppedBlob] = useState(null);
     const editor = useEditor({
         extensions: [
             StarterKit,
@@ -123,7 +128,7 @@ export default function Create() {
                 types: ["heading", "paragraph"],
             }),
         ],
-        content: `<p>Hi there! Start writing your article...</p>`,
+        content: article.content_html,
         editorProps: {
             attributes: {
                 class: "prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[300px] p-4",
@@ -140,10 +145,32 @@ export default function Create() {
     }, [editor]);
 
     const { data, setData, post, processing, errors } = useForm({
-        title: "",
-        content_html: "",
-        content_json: "",
+        title: article.title || "",
+        content_html: article.content_html || "",
+        content_json: article.content_json || "",
+        hero_img: article.hero_img || "",
     });
+
+    // Handler untuk input file, tampilkan cropper
+    const handleImageChange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            setRawImage(URL.createObjectURL(e.target.files[0]));
+            setShowCropper(true);
+        }
+    };
+
+    // Handler setelah crop (preview saja)
+    const handleCropPreview = (blob) => {
+        setCroppedPreview(URL.createObjectURL(blob));
+        setCroppedBlob(blob);
+    };
+
+    // Handler simpan hasil crop ke form
+    const handleCropSave = () => {
+        setData("hero_img", croppedBlob);
+        setShowCropper(false);
+        setRawImage(null);
+    };
 
     useEffect(() => {
         if (editor) {
@@ -175,6 +202,7 @@ export default function Create() {
     // Close dropdown on outside click
     useEffect(() => {
         if (!isOpen) return;
+
         const handleClickOutside = (event) => {
             if (menuRef.current && !menuRef.current.contains(event.target)) {
                 setIsOpen(false);
@@ -189,24 +217,44 @@ export default function Create() {
     const handleSubmit = (e) => {
         e.preventDefault();
         const formData = new FormData();
+        formData.append("_method", "PATCH");
         formData.append("title", data.title);
         formData.append("content_html", data.content_html);
         formData.append("content_json", data.content_json);
-        if (data.hero_img) {
+        if (data.hero_img && typeof data.hero_img !== "string") {
             formData.append("hero_img", data.hero_img);
         }
-        post("/articles", { data: formData, forceFormData: true });
+        if (data.hero_img === "") {
+            formData.append("remove_hero_img", "1");
+        }
+        post(route("articles.update", article.id), {
+            data: formData,
+            forceFormData: true,
+            onFinish: () => {},
+        });
     };
+
+    const textareaRef = useRef(null);
+
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = "auto";
+            textareaRef.current.style.height =
+                textareaRef.current.scrollHeight + "px";
+        }
+    }, [data.title]);
 
     return (
         <AuthenticatedLayout
             header={
                 <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    Tulis Artikel Baru
+                    Edit Artikel: {article.title || "Tulis Artikel Baru"}
                 </h2>
             }
         >
-            <Head title="Tulis Artikel Baru" />
+            <Head
+                title={`Edit Artikel: ${article.title || "Tulis Artikel Baru"}`}
+            />
 
             <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
                 <div className="max-w-5xl mx-auto py-12 px-6">
@@ -221,9 +269,9 @@ export default function Create() {
                                     {/* Title Input */}
                                     <div className="group">
                                         <div className="relative">
-                                            <input
-                                                type="text"
-                                                className="w-full text-3xl font-bold border-0 border-b-3 border-gray-200 focus:border-blue-500 focus:outline-none pb-4 bg-transparent placeholder-gray-400 transition-all duration-300 group-hover:border-gray-300"
+                                            <textarea
+                                                ref={textareaRef}
+                                                className="w-full text-3xl font-bold border-0 pb-4 bg-transparent placeholder-gray-400 transition-all duration-300 group-hover:border-gray-300 resize-none"
                                                 placeholder="Judul artikel yang menarik..."
                                                 value={data.title}
                                                 required
@@ -233,6 +281,15 @@ export default function Create() {
                                                         e.target.value
                                                     )
                                                 }
+                                                rows={1}
+                                                style={{ overflow: "hidden" }}
+                                                onInput={(e) => {
+                                                    e.target.style.height =
+                                                        "auto";
+                                                    e.target.style.height =
+                                                        e.target.scrollHeight +
+                                                        "px";
+                                                }}
                                             />
                                             <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300 group-focus-within:w-full"></div>
                                         </div>
@@ -257,12 +314,12 @@ export default function Create() {
                                     {/* Hero Image Upload */}
                                     <div className="space-y-4">
                                         <label className="block text-xl font-semibold text-gray-800 mb-3">
-                                            Gambar Utama
+                                            Gambar Utama (opsional)
                                         </label>
 
                                         <div className="flex flex-col sm:flex-row items-start gap-6">
                                             {/* Upload Button */}
-                                            <label className="group relative inline-flex items-center px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-dashed border-blue-200 rounded-2xl cursor-pointer hover:from-blue-100 hover:to-indigo-100 hover:border-blue-300 transition-all duration-300 transform hover:scale-105">
+                                            <label className="group inline-flex items-center px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-dashed border-blue-200 rounded-2xl cursor-pointer hover:from-blue-100 hover:to-indigo-100 hover:border-blue-300 transition-all duration-300 transform hover:scale-105">
                                                 <div className="flex items-center gap-3">
                                                     <div className="p-2 bg-blue-500 rounded-xl text-white group-hover:bg-blue-600 transition-colors duration-200">
                                                         <svg
@@ -293,12 +350,7 @@ export default function Create() {
                                                     type="file"
                                                     accept="image/*"
                                                     className="hidden"
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            "hero_img",
-                                                            e.target.files[0]
-                                                        )
-                                                    }
+                                                    onChange={handleImageChange}
                                                 />
                                             </label>
 
@@ -310,7 +362,7 @@ export default function Create() {
                                                             src={
                                                                 typeof data.hero_img ===
                                                                 "string"
-                                                                    ? data.hero_img
+                                                                    ? `/storage/${data.hero_img}`
                                                                     : URL.createObjectURL(
                                                                           data.hero_img
                                                                       )
@@ -322,12 +374,18 @@ export default function Create() {
                                                     </div>
                                                     <button
                                                         type="button"
-                                                        onClick={() =>
+                                                        onClick={() => {
                                                             setData(
                                                                 "hero_img",
+                                                                ""
+                                                            );
+                                                            setCroppedPreview(
                                                                 null
-                                                            )
-                                                        }
+                                                            );
+                                                            setCroppedBlob(
+                                                                null
+                                                            );
+                                                        }}
                                                         className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-lg transform hover:scale-110 transition-all duration-200"
                                                     >
                                                         <svg
@@ -384,7 +442,7 @@ export default function Create() {
                                             </div>
 
                                             {/* Editor Content Area */}
-                                            <div className="bg-white min-h-[500px] relative">
+                                            <div className="bg-white overflow-auto h-[750px] md:min-h-[500px] relative">
                                                 <EditorContent
                                                     editor={editor}
                                                     className="prose prose-lg max-w-none p-6 focus:outline-none"
@@ -552,6 +610,322 @@ export default function Create() {
                     </div>
                 </div>
             </div>
+
+            {/* Modal Cropper Fullscreen */}
+            {/* Modal Cropper Fullscreen - Responsive & Modern Design */}
+            {showCropper && rawImage && (
+                <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm">
+                    {/* Mobile/Desktop Layout Container */}
+                    <div className="relative w-full h-full flex flex-col">
+                        {/* Header Bar - Fixed at top */}
+                        <div className="flex-shrink-0 px-4 py-4 md:px-6 lg:px-8">
+                            <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl">
+                                <div className="px-4 py-3 md:px-6 md:py-4">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                                                <svg
+                                                    className="w-5 h-5 text-white"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="2"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                                    />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <h2 className="text-white font-bold text-lg md:text-xl">
+                                                    Crop Image
+                                                </h2>
+                                                <p className="text-white/70 text-sm hidden sm:block">
+                                                    Sesuaikan gambar dengan
+                                                    ukuran yang sempurna
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Close Button */}
+                                        <button
+                                            onClick={() => {
+                                                setShowCropper(false);
+                                                setRawImage(null);
+                                                setCroppedPreview(null);
+                                                setCroppedBlob(null);
+                                            }}
+                                            className="w-10 h-10 bg-red-500/20 hover:bg-red-500/30 backdrop-blur-sm rounded-xl flex items-center justify-center transition-all duration-200 border border-red-400/30 hover:border-red-400/50 group"
+                                            type="button"
+                                        >
+                                            <svg
+                                                className="w-5 h-5 text-red-400 group-hover:text-red-300 transition-colors"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                strokeWidth="2"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    d="M6 18L18 6M6 6l12 12"
+                                                />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Main Content Area - Scrollable */}
+                        <div className="flex-1 px-4 md:px-6 lg:px-8 pb-4 overflow-y-auto">
+                            <div className="max-w-6xl mx-auto">
+                                {/* Cropper Container */}
+                                <div className="bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 shadow-2xl p-4 md:p-6 lg:p-8 mb-6">
+                                    <div className="relative">
+                                        {/* Cropper Component */}
+                                        <div className="bg-gray-900/50 rounded-2xl p-4 md:p-6 min-h-[300px] md:min-h-[400px] lg:min-h-[500px] flex items-center justify-center">
+                                            <ImageCropper
+                                                image={rawImage}
+                                                onCropPreview={
+                                                    handleCropPreview
+                                                }
+                                            />
+                                        </div>
+
+                                        {/* Crop Instructions - Mobile */}
+                                        <div className="mt-4 sm:hidden">
+                                            <div className="bg-blue-500/20 backdrop-blur-sm rounded-xl p-3 border border-blue-400/30">
+                                                <p className="text-white/90 text-sm text-center">
+                                                    📱 Gunakan dua jari untuk
+                                                    zoom dan geser area crop
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Crop Instructions - Desktop */}
+                                        <div className="mt-4 hidden sm:block">
+                                            <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                                                <div className="flex items-center justify-center gap-6 text-white/90 text-sm">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center">
+                                                            <span className="text-xs">
+                                                                🖱️
+                                                            </span>
+                                                        </div>
+                                                        <span>
+                                                            Drag untuk memindah
+                                                            area
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center">
+                                                            <span className="text-xs">
+                                                                ⚡
+                                                            </span>
+                                                        </div>
+                                                        <span>
+                                                            Scroll untuk zoom
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center">
+                                                            <span className="text-xs">
+                                                                🎯
+                                                            </span>
+                                                        </div>
+                                                        <span>
+                                                            Tarik sudut untuk
+                                                            resize
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Preview Result */}
+                                {croppedPreview && (
+                                    <div className="bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 shadow-2xl p-4 md:p-6 lg:p-8 mb-6">
+                                        <div className="text-center">
+                                            <div className="flex items-center justify-center gap-2 mb-4">
+                                                <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                                                    <svg
+                                                        className="w-4 h-4 text-white"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <path
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            d="M5 13l4 4L19 7"
+                                                        />
+                                                    </svg>
+                                                </div>
+                                                <h3 className="text-white font-semibold text-lg">
+                                                    Preview Hasil Crop
+                                                </h3>
+                                            </div>
+
+                                            <div className="relative inline-block">
+                                                <img
+                                                    src={croppedPreview}
+                                                    alt="Preview Crop"
+                                                    className="rounded-2xl border-2 border-white/20 shadow-2xl max-w-full h-48 md:h-64 lg:h-80 object-cover mx-auto"
+                                                />
+                                                <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl opacity-75 blur-sm -z-10"></div>
+                                            </div>
+
+                                            <p className="text-white/70 text-sm mt-3">
+                                                Gambar siap untuk disimpan ✨
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Action Buttons - Fixed at bottom */}
+                        <div className="flex-shrink-0 px-4 py-4 md:px-6 lg:px-8">
+                            <div className="max-w-6xl mx-auto">
+                                <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl p-4 md:p-6">
+                                    {/* Mobile Layout */}
+                                    <div className="flex flex-col sm:hidden gap-3">
+                                        <button
+                                            className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-500 disabled:to-gray-600 text-white font-bold rounded-xl transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-3"
+                                            onClick={handleCropSave}
+                                            type="button"
+                                            disabled={!croppedBlob}
+                                        >
+                                            <svg
+                                                className="w-5 h-5"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                strokeWidth="2"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    d="M5 13l4 4L19 7"
+                                                />
+                                            </svg>
+                                            <span>Simpan Gambar</span>
+                                        </button>
+
+                                        <button
+                                            className="w-full py-4 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold rounded-xl transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] border border-white/30 hover:border-white/50 flex items-center justify-center gap-3"
+                                            onClick={() => {
+                                                setShowCropper(false);
+                                                setRawImage(null);
+                                                setCroppedPreview(null);
+                                                setCroppedBlob(null);
+                                            }}
+                                            type="button"
+                                        >
+                                            <svg
+                                                className="w-5 h-5"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                strokeWidth="2"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    d="M6 18L18 6M6 6l12 12"
+                                                />
+                                            </svg>
+                                            <span>Batal</span>
+                                        </button>
+                                    </div>
+
+                                    {/* Desktop Layout */}
+                                    <div className="hidden sm:flex items-center justify-between">
+                                        <div className="text-white/70 text-sm">
+                                            {croppedBlob ? (
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                                    <span>
+                                                        Gambar siap untuk
+                                                        disimpan
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                                                    <span>
+                                                        Sesuaikan area crop
+                                                        terlebih dahulu
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="flex items-center gap-4">
+                                            <button
+                                                className="px-6 py-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold rounded-xl transition-all duration-200 transform hover:scale-105 active:scale-95 border border-white/30 hover:border-white/50 flex items-center gap-2"
+                                                onClick={() => {
+                                                    setShowCropper(false);
+                                                    setRawImage(null);
+                                                    setCroppedPreview(null);
+                                                    setCroppedBlob(null);
+                                                }}
+                                                type="button"
+                                            >
+                                                <svg
+                                                    className="w-4 h-4"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="2"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        d="M6 18L18 6M6 6l12 12"
+                                                    />
+                                                </svg>
+                                                <span>Batal</span>
+                                            </button>
+
+                                            <button
+                                                className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-500 disabled:to-gray-600 text-white font-bold rounded-xl transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-xl disabled:cursor-not-allowed disabled:transform-none flex items-center gap-2 relative overflow-hidden"
+                                                onClick={handleCropSave}
+                                                type="button"
+                                                disabled={!croppedBlob}
+                                            >
+                                                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                                                <svg
+                                                    className="w-5 h-5 relative z-10"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="2"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        d="M5 13l4 4L19 7"
+                                                    />
+                                                </svg>
+                                                <span className="relative z-10">
+                                                    Simpan Gambar
+                                                </span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AuthenticatedLayout>
     );
 }

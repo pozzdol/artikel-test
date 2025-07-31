@@ -7,6 +7,7 @@ function ButtonMenu(props) {
             className={`px-2 py-1 rounded bg-gray-200/0 hover:bg-gray-200${
                 props.className ? ` ${props.className}` : ""
             } ${props.isActive ? "is-active" : ""}`}
+            title={props.title}
         >
             {props.children}
         </button>
