@@ -3,17 +3,6 @@
         margin-top: 0;
     }
 
-    ul,
-    ol {
-        padding: 0 1rem;
-        margin: 1.25rem 1rem 1.25rem 0.4rem;
-
-        li p {
-            margin-top: 0.25rem;
-            margin-bottom: 0.25rem;
-        }
-    }
-
     h1 {
         font-size: 1.875rem; /* Tailwind: text-3xl */
         font-weight: 700; /* Tailwind: font-bold */
@@ -32,6 +21,116 @@
     h4 {
         font-size: 1rem; /* Tailwind: text-base */
         font-weight: 600; /* Tailwind: font-semibold */
+    }
+
+    /* Modern Enhanced Blockquote */
+    blockquote {
+        position: relative;
+        border-left: 4px solid #3b82f6; /* Tailwind: border-blue-500 */
+        padding: 1.5rem 1.5rem 1.5rem 2rem;
+        margin: 2rem 0;
+        background: linear-gradient(
+            135deg,
+            #f8fafc 0%,
+            #f1f5f9 100%
+        ); /* Tailwind: from-slate-50 to-slate-100 */
+        border-radius: 0.75rem; /* Tailwind: rounded-xl */
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+            0 2px 4px -1px rgba(0, 0, 0, 0.06); /* Tailwind: shadow-md */
+        color: #374151; /* Tailwind: text-gray-700 */
+        font-style: italic;
+        line-height: 1.75; /* Tailwind: leading-7 */
+        transition: all 0.3s ease;
+    }
+
+    blockquote:hover {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+            0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Tailwind: shadow-lg */
+        border-left-color: #2563eb; /* Tailwind: border-blue-600 */
+    }
+
+    /* Quote mark decoration */
+    blockquote::before {
+        content: '"';
+        position: absolute;
+        top: -0.5rem;
+        left: 1rem;
+        font-size: 4rem; /* Tailwind: text-6xl */
+        color: #3b82f6; /* Tailwind: text-blue-500 */
+        opacity: 0.3;
+        font-family: Georgia, serif;
+        line-height: 1;
+    }
+
+    /* Blog/News Portal Style Lists - Clean & Professional */
+
+    /* Ordered Lists - Minimalist numbering like Medium/Substack */
+    ol {
+        list-style: none;
+        counter-reset: item;
+        padding-left: 0;
+        margin: 1.5rem 0 1rem 0;
+        line-height: 1.7;
+    }
+
+    ol li {
+        counter-increment: item;
+        position: relative;
+        margin-bottom: 0rem;
+        padding-left: 1.5rem;
+        text-align: justify;
+        font-size: 1rem;
+        line-height: 1.7;
+    }
+
+    ol li::before {
+        content: counter(item) ".";
+        position: absolute;
+        left: 0;
+        top: 0;
+        font-weight: 600; /* Tailwind: font-semibold */
+        min-width: 1.5rem;
+        font-feature-settings: "tnum"; /* Tabular numbers for alignment */
+    }
+
+    /* Unordered Lists - Clean bullet points like NYTimes/Guardian */
+    ul {
+        list-style: none;
+        padding-left: 0;
+        margin: 1.5rem 0 1rem 1.5rem;
+        line-height: 1.7;
+    }
+
+    ul li {
+        position: relative;
+        margin-bottom: 0rem;
+        padding-left: 1.5rem;
+        text-align: justify;
+        font-size: 1rem;
+        line-height: 1.7;
+    }
+
+    ul li::before {
+        content: "•";
+        position: absolute;
+        left: 0;
+        top: 0;
+        font-weight: 600; /* Tailwind: font-semibold */
+        font-size: 1.2em;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 640px) {
+        blockquote {
+            padding: 1rem 1rem 1rem 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        blockquote::before {
+            font-size: 3rem; /* Tailwind: text-5xl */
+            top: -0.25rem;
+            left: 0.75rem;
+        }
     }
 }
 

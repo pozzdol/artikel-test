@@ -4,6 +4,7 @@ import { useHotkeys } from "react-hotkeys-hook"
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 // --- Lib ---
 import {
@@ -141,6 +142,7 @@ export function useTextAlign(config) {
   } = config
 
   const { editor } = useTiptapEditor(providedEditor)
+  const isMobile = useIsMobile()
   const [isVisible, setIsVisible] = React.useState(true)
   const canAlign = canSetTextAlign(editor, align)
   const isActive = isTextAlignActive(editor, align)
@@ -176,7 +178,7 @@ export function useTextAlign(config) {
     handleTextAlign()
   }, {
     enabled: isVisible && canAlign,
-    enableOnContentEditable: true,
+    enableOnContentEditable: !isMobile,
     enableOnFormTags: true,
   })
 

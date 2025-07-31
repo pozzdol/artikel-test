@@ -5,6 +5,7 @@ import { NodeSelection, TextSelection } from "@tiptap/pm/state"
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 // --- Icons ---
 import { ListIcon } from "@/components/tiptap-icons/list-icon"
@@ -227,6 +228,7 @@ export function useList(config) {
   } = config
 
   const { editor } = useTiptapEditor(providedEditor)
+  const isMobile = useIsMobile()
   const [isVisible, setIsVisible] = React.useState(true)
   const canToggle = canToggleList(editor, type)
   const isActive = isListActive(editor, type)
@@ -262,7 +264,7 @@ export function useList(config) {
     handleToggle()
   }, {
     enabled: isVisible && canToggle,
-    enableOnContentEditable: true,
+    enableOnContentEditable: !isMobile,
     enableOnFormTags: true,
   })
 

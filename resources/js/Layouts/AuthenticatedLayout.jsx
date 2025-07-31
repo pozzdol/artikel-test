@@ -3,6 +3,7 @@ import Dropdown from "@/Components/Dropdown";
 import NavLink from "@/Components/NavLink";
 import ResponsiveNavLink from "@/Components/ResponsiveNavLink";
 import { Link, usePage } from "@inertiajs/react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 
 export default function AuthenticatedLayout({ header, children }) {
@@ -10,6 +11,8 @@ export default function AuthenticatedLayout({ header, children }) {
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
+
+    const [isOpen, setIsOpen] = useState(false);
 
     return (
         <div className="min-h-screen bg-gray-100">
@@ -146,19 +149,47 @@ export default function AuthenticatedLayout({ header, children }) {
                         >
                             Dashboard
                         </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route("articles.index")}
+                            active={route().current("articles.index")}
+                        >
+                            Articles
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route("articles.create")}
+                            active={route().current("articles.create")}
+                        >
+                            Create Article
+                        </ResponsiveNavLink>
                     </div>
 
-                    <div className="border-t border-gray-200 pb-1 pt-4">
-                        <div className="px-4">
-                            <div className="text-base font-medium text-gray-800">
-                                {user.name}
+                    <div className="border-t border-gray-200 py-4">
+                        <button
+                            onClick={() => setIsOpen(!isOpen)}
+                            className="px-4 text-start w-full flex items-center text-sm font-medium"
+                        >
+                            <div className="">
+                                <div className="text-base font-medium text-gray-800">
+                                    {user.name}
+                                </div>
+                                <div className="text-sm font-medium text-gray-500">
+                                    {user.email}
+                                </div>
                             </div>
-                            <div className="text-sm font-medium text-gray-500">
-                                {user.email}
-                            </div>
-                        </div>
+                            {isOpen ? (
+                                <ChevronUp className="ml-auto" />
+                            ) : (
+                                <ChevronDown className="ml-auto" />
+                            )}
+                        </button>
 
-                        <div className="mt-3 space-y-1">
+                        <div
+                            className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                                isOpen
+                                    ? "max-h-96 opacity-100"
+                                    : "max-h-0 opacity-0"
+                            }`}
+                        >
                             <ResponsiveNavLink href={route("profile.edit")}>
                                 Profile
                             </ResponsiveNavLink>

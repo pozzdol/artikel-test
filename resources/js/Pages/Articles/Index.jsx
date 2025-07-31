@@ -1,10 +1,12 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, Link } from "@inertiajs/react";
 import {
+    Archive,
     Eye,
     LucideSquareArrowOutUpRight,
     MessageSquare,
     MoreVertical,
+    Send,
     Share,
     Share2,
     SquareArrowOutUpRight,
@@ -18,6 +20,20 @@ import React from "react";
 
 export default function Index({ articles }) {
     const [openDropdown, setOpenDropdown] = React.useState(null);
+    const [dropdownPosition, setDropdownPosition] = React.useState("bottom");
+
+    // Helper to handle dropdown placement
+    const handleDropdownOpen = (e, articleId) => {
+        const buttonRect = e.currentTarget.getBoundingClientRect();
+        const dropdownHeight = 200; // estimate dropdown height (px)
+        const spaceBelow = window.innerHeight - buttonRect.bottom;
+        if (spaceBelow < dropdownHeight) {
+            setDropdownPosition("top");
+        } else {
+            setDropdownPosition("bottom");
+        }
+        setOpenDropdown(articleId);
+    };
 
     function share(article) {
         if (navigator.share) {
@@ -70,11 +86,11 @@ export default function Index({ articles }) {
                         <div className="flex flex-col gap-4">
                             {articles.map((article, index) => (
                                 <div
-                                    className="bg-white rounded-lg p-4 md:py-2 md:px-6 flex flex-col md:flex-row group md:items-center shadow-sm"
+                                    className="bg-white rounded-lg p-4 lg:py-2 lg:px-6 flex flex-col lg:flex-row group lg:items-center shadow-sm"
                                     key={article.id}
                                 >
                                     {/* Mobile Layout */}
-                                    <div className="md:hidden">
+                                    <div className="lg:hidden">
                                         {/* Header with image and title */}
                                         <div className="flex gap-3 mb-3">
                                             {article.hero_img && (
@@ -112,10 +128,19 @@ export default function Index({ articles }) {
                                             <time className="text-gray-600 text-xs">
                                                 {new Date(
                                                     article.created_at
-                                                ).toLocaleDateString("id-ID", {
+                                                ).toLocaleDateString("en-US", {
                                                     year: "numeric",
                                                     month: "short",
                                                     day: "numeric",
+                                                })}
+                                                <span className="text-gray-300">
+                                                    •
+                                                </span>
+                                                {new Date(
+                                                    article.created_at
+                                                ).toLocaleTimeString("id-ID", {
+                                                    hour: "2-digit",
+                                                    minute: "2-digit",
                                                 })}
                                             </time>
                                         </div>
@@ -146,14 +171,14 @@ export default function Index({ articles }) {
                                             <div className="flex items-center gap-2">
                                                 <img
                                                     src={
-                                                        article.user.img_path ||
-                                                        `https://avatar.iran.liara.run/public?seed=${article.user.id}`
+                                                        article.img_path ||
+                                                        `https://avatar.iran.liara.run/public?seed=${article.author_name}`
                                                     }
                                                     alt=""
                                                     className="w-6 h-6 rounded-full"
                                                 />
-                                                <span className="text-sm text-gray-600 truncate max-w-28">
-                                                    {article.user.name}
+                                                <span className="text-sm text-gray-600 max-w-32 md:max-w-48 truncate">
+                                                    {article.author_name}
                                                 </span>
                                             </div>
 
@@ -167,29 +192,35 @@ export default function Index({ articles }) {
                                                     0
                                                     <ThumbsUp size={14} />
                                                 </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        share(article)
-                                                    }
-                                                    title="Share"
-                                                    className="p-1.5 rounded-full hover:bg-gray-200 bg-gray-100 transition-all duration-200"
-                                                >
-                                                    <Share2 size={14} />
-                                                </button>
-
+                                                {article.status === "draft" ? (
+                                                    <></>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            share(article)
+                                                        }
+                                                        title="Share"
+                                                        className="p-1.5 rounded-full hover:bg-gray-200 bg-gray-100 transition-all duration-200"
+                                                    >
+                                                        <Share2 size={14} />
+                                                    </button>
+                                                )}
                                                 {/* Action menu for mobile */}
                                                 <div className="relative">
                                                     {/* Tombol trigger dropdown */}
                                                     <button
                                                         className="p-1.5 rounded-full hover:bg-gray-200 bg-gray-100 transition-all duration-200"
-                                                        onClick={() =>
-                                                            setOpenDropdown(
-                                                                openDropdown ===
-                                                                    article.id
-                                                                    ? null
-                                                                    : article.id
-                                                            )
+                                                        onClick={(e) =>
+                                                            openDropdown ===
+                                                            article.id
+                                                                ? setOpenDropdown(
+                                                                      null
+                                                                  )
+                                                                : handleDropdownOpen(
+                                                                      e,
+                                                                      article.id
+                                                                  )
                                                         }
                                                         type="button"
                                                     >
@@ -201,7 +232,14 @@ export default function Index({ articles }) {
                                                     {openDropdown ===
                                                         article.id && (
                                                         <div
-                                                            className="absolute right-0 z-10 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg flex flex-col animate-fade-in"
+                                                            className={`absolute right-0 z-10 w-40 bg-white border border-gray-200 rounded shadow-lg flex flex-col animate-fade-in
+                                                            ${
+                                                                dropdownPosition ===
+                                                                "top"
+                                                                    ? "bottom-full mb-2"
+                                                                    : "mt-2 top-full"
+                                                            }
+                                                        `}
                                                             onMouseLeave={() =>
                                                                 setOpenDropdown(
                                                                     null
@@ -210,35 +248,67 @@ export default function Index({ articles }) {
                                                         >
                                                             {article.status ===
                                                             "draft" ? (
-                                                                <Link
-                                                                    title="Preview"
-                                                                    href={`/articles/${article.id}/preview`}
-                                                                    className="flex items-center gap-2 px-4 py-2 text-sky-600 hover:bg-sky-50 transition-all duration-200"
-                                                                >
-                                                                    <Eye
-                                                                        size={
-                                                                            16
-                                                                        }
-                                                                    />{" "}
-                                                                    Preview
-                                                                </Link>
+                                                                <>
+                                                                    <Link
+                                                                        title="Preview"
+                                                                        href={`/articles/${article.id}/preview`}
+                                                                        className="flex items-center gap-2 px-4 py-2 text-sky-600 hover:bg-sky-50 transition-all duration-200"
+                                                                    >
+                                                                        <Eye
+                                                                            size={
+                                                                                16
+                                                                            }
+                                                                        />{" "}
+                                                                        Preview
+                                                                    </Link>
+                                                                    <Link
+                                                                        title="Publish"
+                                                                        href={`/articles/${article.id}/publish`}
+                                                                        className="flex items-center gap-2 px-4 py-2 text-amber-600 hover:bg-amber-50 transition-all duration-200"
+                                                                    >
+                                                                        <Send
+                                                                            size={
+                                                                                16
+                                                                            }
+                                                                        />{" "}
+                                                                        Publish
+                                                                    </Link>
+                                                                </>
                                                             ) : (
-                                                                <Link
-                                                                    title="View Article"
-                                                                    href={`/articles/${article.id}`}
-                                                                    className="flex items-center gap-2 px-4 py-2 text-sky-600 hover:bg-sky-50 transition-all duration-200"
-                                                                >
-                                                                    <LucideSquareArrowOutUpRight
-                                                                        size={
-                                                                            16
-                                                                        }
-                                                                    />{" "}
-                                                                    Lihat
-                                                                </Link>
+                                                                <>
+                                                                    <Link
+                                                                        title="View Article"
+                                                                        href={`/articles/${article.id}`}
+                                                                        className="flex items-center gap-2 px-4 py-2 text-emerald-600 hover:bg-emerald-50 transition-all duration-200"
+                                                                    >
+                                                                        <LucideSquareArrowOutUpRight
+                                                                            size={
+                                                                                16
+                                                                            }
+                                                                        />{" "}
+                                                                        Lihat
+                                                                    </Link>
+                                                                    <Link
+                                                                        title="Set to draft"
+                                                                        href={`/articles/${article.id}/draft`}
+                                                                        className="flex items-center gap-2 px-4 py-2 text-amber-600 hover:bg-amber-50 transition-all duration-200"
+                                                                    >
+                                                                        <Archive
+                                                                            size={
+                                                                                16
+                                                                            }
+                                                                        />{" "}
+                                                                        Set to
+                                                                        draft
+                                                                    </Link>
+                                                                </>
                                                             )}
                                                             <Link
                                                                 title="Edit Article"
-                                                                href={`/articles/${article.id}/edit`}
+                                                                href={route(
+                                                                    "articles.edit",
+                                                                    article
+                                                                )}
                                                                 className="flex items-center gap-2 px-4 py-2 text-sky-600 hover:bg-sky-50 transition-all duration-200"
                                                             >
                                                                 <SquarePen
@@ -247,8 +317,22 @@ export default function Index({ articles }) {
                                                                 Edit
                                                             </Link>
                                                             <Link
-                                                                title="Delete Article"
-                                                                href={`/articles/${article.id}/delete`}
+                                                                href={route(
+                                                                    "articles.destroy",
+                                                                    article.id
+                                                                )}
+                                                                method="delete"
+                                                                as="button"
+                                                                onClick={(
+                                                                    e
+                                                                ) => {
+                                                                    if (
+                                                                        !confirm(
+                                                                            "Yakin hapus artikel ini?"
+                                                                        )
+                                                                    )
+                                                                        e.preventDefault();
+                                                                }}
                                                                 className="flex items-center gap-2 px-4 py-2 text-rose-600 hover:bg-rose-50 transition-all duration-200"
                                                             >
                                                                 <Trash
@@ -264,7 +348,7 @@ export default function Index({ articles }) {
                                     </div>
 
                                     {/* Desktop Layout (hidden on mobile) */}
-                                    <div className="hidden md:contents">
+                                    <div className="hidden lg:contents">
                                         {article.hero_img && (
                                             <div className="overflow-hidden w-[142px] h-[80px] rounded flex-shrink-0">
                                                 <img
@@ -276,7 +360,7 @@ export default function Index({ articles }) {
                                         )}
                                         <div className="ms-4 grid grid-rows-3 flex-1 min-w-0">
                                             {/* Title */}
-                                            <a className="text-lg max-w-[250px] truncate font-semibold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition-colors duration-200 line-clamp-2">
+                                            <a className="text-lg w-fit max-w-[250px] md:max-w-full truncate font-semibold text-gray-800 hover:text-blue-600 hover:underline cursor-pointer transition-colors duration-200 line-clamp-2">
                                                 {article.title}
                                             </a>
 
@@ -336,48 +420,86 @@ export default function Index({ articles }) {
                                                 <div className="hidden group-hover:flex gap-2 mb-1 transition-all duration-200">
                                                     {article.status ===
                                                     "draft" ? (
-                                                        <Link
-                                                            title="Preview"
-                                                            href={`/articles/${article.id}/preview`}
-                                                            className="text-sky-600 cursor-pointer bg-sky-100 hover:bg-sky-200 p-2 rounded-full transition-all duration-200"
-                                                        >
-                                                            <Eye size={16} />
-                                                        </Link>
+                                                        <>
+                                                            <Link
+                                                                title="Preview"
+                                                                href={`/articles/${article.id}/preview`}
+                                                                className="text-sky-600 cursor-pointer bg-sky-100 hover:bg-sky-200 p-2 rounded-full transition-all duration-200"
+                                                            >
+                                                                <Eye
+                                                                    size={16}
+                                                                />
+                                                            </Link>
+                                                            <Link
+                                                                title="Publish"
+                                                                href={`/articles/${article.id}/publish`}
+                                                                className="text-amber-600 cursor-pointer bg-amber-100 hover:bg-amber-200 p-2 rounded-full transition-all duration-200"
+                                                            >
+                                                                <Send
+                                                                    size={16}
+                                                                />
+                                                            </Link>
+                                                        </>
                                                     ) : (
-                                                        <Link
-                                                            title="View Article"
-                                                            href={`/articles/${article.id}`}
-                                                            className="text-sky-600 cursor-pointer bg-sky-100 hover:bg-sky-200 p-2 rounded-full transition-all duration-200"
-                                                        >
-                                                            <LucideSquareArrowOutUpRight
-                                                                size={16}
-                                                            />
-                                                        </Link>
+                                                        <>
+                                                            <Link
+                                                                title="View Article"
+                                                                href={`/articles/${article.id}`}
+                                                                className="text-emerald-600 cursor-pointer bg-emerald-100 hover:bg-emerald-200 p-2 rounded-full transition-all duration-200"
+                                                            >
+                                                                <LucideSquareArrowOutUpRight
+                                                                    size={16}
+                                                                />
+                                                            </Link>
+                                                            <Link
+                                                                title="Archive Article"
+                                                                href={`/articles/${article.id}/archive`}
+                                                                className="text-amber-600 cursor-pointer bg-amber-100 hover:bg-amber-200 p-2 rounded-full transition-all duration-200"
+                                                            >
+                                                                <Archive
+                                                                    size={16}
+                                                                />
+                                                            </Link>
+                                                        </>
                                                     )}
                                                     <Link
                                                         title="Edit Article"
-                                                        href={`/articles/${article.id}/edit`}
+                                                        href={route(
+                                                            "articles.edit",
+                                                            article
+                                                        )}
                                                         className="text-sky-600 cursor-pointer bg-sky-100 hover:bg-sky-200 p-2 rounded-full transition-all duration-200"
                                                     >
                                                         <SquarePen size={16} />
                                                     </Link>
                                                     <Link
-                                                        title="Delete Article"
-                                                        href={`/articles/${article.id}/delete`}
-                                                        className="text-rose-600 cursor-wait bg-rose-100 hover:bg-rose-200 p-2 rounded-full transition-all duration-200"
+                                                        href={route(
+                                                            "articles.destroy",
+                                                            article.id
+                                                        )}
+                                                        method="delete"
+                                                        as="button"
+                                                        onClick={(e) => {
+                                                            if (
+                                                                !confirm(
+                                                                    "Yakin hapus artikel ini?"
+                                                                )
+                                                            )
+                                                                e.preventDefault();
+                                                        }}
+                                                        className="text-rose-600 cursor-pointer bg-rose-100 hover:bg-rose-200 p-2 rounded-full transition-all duration-200"
                                                     >
                                                         <Trash size={16} />
                                                     </Link>
                                                 </div>
                                                 <div className="flex group-hover:hidden items-center transition-all duration-200">
-                                                    <p className="truncate md:max-w-52 max-w-24 text-base">
-                                                        {article.user.name}
+                                                    <p className="truncate md:max-w-52 max-w-10 text-base">
+                                                        {article.author_name}
                                                     </p>
                                                     <img
                                                         src={
-                                                            article.user
-                                                                .img_path ||
-                                                            `https://avatar.iran.liara.run/public?seed=${article.user.id}`
+                                                            article.img_path ||
+                                                            `https://avatar.iran.liara.run/public?seed=${article.author_name}`
                                                         }
                                                         alt=""
                                                         className="w-8 h-8 rounded-full ms-2"
@@ -385,16 +507,20 @@ export default function Index({ articles }) {
                                                 </div>
                                             </div>
                                             <div className="flex gap-1">
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        share(article)
-                                                    }
-                                                    title="Share"
-                                                    className="p-2 rounded-full hover:bg-gray-200 bg-gray-100 transition-all duration-200"
-                                                >
-                                                    <Share2 size={16} />
-                                                </button>
+                                                {article.status === "draft" ? (
+                                                    <></>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            share(article)
+                                                        }
+                                                        title="Share"
+                                                        className="p-2 rounded-full hover:bg-gray-200 bg-gray-100 transition-all duration-200"
+                                                    >
+                                                        <Share2 size={16} />
+                                                    </button>
+                                                )}
                                                 <div className="flex items-center gap-1 text-gray-600">
                                                     0
                                                     <MessageSquare size={16} />

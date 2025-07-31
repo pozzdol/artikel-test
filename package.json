@@ -3,7 +3,7 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite --host 175.16.1.205"
     },
     "devDependencies": {
         "@headlessui/react": "^2.0.0",
@@ -22,7 +22,7 @@
         "vite": "^6.0.11"
     },
     "dependencies": {
-        "@floating-ui/react": "^0.27.14",
+        "@floating-ui/react": "^0.27.15",
         "@primer/octicons-react": "^19.15.5",
         "@radix-ui/react-dropdown-menu": "^2.1.15",
         "@radix-ui/react-popover": "^1.1.14",
@@ -41,8 +41,10 @@
         "@tiptap/pm": "^3.0.7",
         "@tiptap/react": "^3.0.7",
         "@tiptap/starter-kit": "^3.0.7",
+        "antd": "^5.26.7",
         "lucide": "^0.532.0",
         "lucide-react": "^0.532.0",
+        "react-easy-crop": "^5.5.0",
         "react-hotkeys-hook": "^5.1.0"
     }
 }
